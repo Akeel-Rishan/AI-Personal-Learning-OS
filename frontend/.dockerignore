@@ -1,0 +1,6 @@
+# Exclude local build output and dependencies from the Docker context.
+node_modules
+.next
+npm-debug.log
+.env.local
+

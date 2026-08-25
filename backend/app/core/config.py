@@ -14,6 +14,8 @@ class Settings(BaseSettings):
     secret_key: str = Field(alias="SECRET_KEY")
     environment: str = Field(alias="ENVIRONMENT")
     allowed_origins: list[str] = Field(alias="ALLOWED_ORIGINS")
+    access_token_expire_minutes: int = Field(default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
+    refresh_token_expire_days: int = Field(default=7, alias="REFRESH_TOKEN_EXPIRE_DAYS")
 
     model_config = SettingsConfigDict(
         env_file=".env",

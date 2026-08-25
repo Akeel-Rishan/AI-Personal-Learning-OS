@@ -42,3 +42,6 @@ AI Personal Learning OS is the infrastructure foundation for an adaptive learnin
 `-- docker-compose.yml Local development services
 ```
 
+## Authentication security note
+
+The MVP stores the short-lived access token in browser `localStorage` so the frontend can attach it to API requests. Refresh tokens are never written to JavaScript-accessible storage; the backend also issues them as HTTP-only, same-site cookies. A production hardening pass should move the access token to an in-memory or fully cookie-based session strategy and enable secure cookies over HTTPS.

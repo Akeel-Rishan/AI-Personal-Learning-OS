@@ -1,0 +1,12 @@
+# Ignore generated files, local environments, and secrets.
+node_modules/
+.next/
+__pycache__/
+*.pyc
+.env
+.env.local
+venv/
+.venv/
+dist/
+.DS_Store
+

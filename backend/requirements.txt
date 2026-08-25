@@ -1,0 +1,14 @@
+# Runtime and infrastructure dependencies for the FastAPI service.
+fastapi
+uvicorn[standard]
+sqlalchemy[asyncio]
+asyncpg
+alembic
+pydantic-settings
+python-dotenv
+redis
+httpx
+python-jose[cryptography]
+passlib[bcrypt]
+python-multipart
+

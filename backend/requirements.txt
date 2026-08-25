@@ -3,6 +3,7 @@ fastapi
 uvicorn[standard]
 sqlalchemy[asyncio]
 asyncpg
+psycopg2-binary
 alembic
 pydantic-settings
 python-dotenv
@@ -11,4 +12,3 @@ httpx
 python-jose[cryptography]
 passlib[bcrypt]
 python-multipart
-

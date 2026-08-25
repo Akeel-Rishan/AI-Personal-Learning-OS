@@ -1,19 +1,28 @@
-"""Alembic migration environment using the application's async engine."""
+"""Alembic migration environment for the complete application schema.
 
-from asyncio import run
+To generate a migration:
+docker-compose exec backend alembic revision --autogenerate -m "initial schema"
+
+To run migrations:
+docker-compose exec backend alembic upgrade head
+
+To run seed data:
+docker-compose exec backend python -m app.seeds.skills_seed
+"""
+
 from logging.config import fileConfig
 
 from alembic import context
-from sqlalchemy import pool
-from sqlalchemy.engine import Connection
-from sqlalchemy.ext.asyncio import async_engine_from_config
+from sqlalchemy import engine_from_config, pool
 
 from app.core.config import settings
 from app.core.database import Base
+from app import models  # noqa: F401
 
 
 config = context.config
-config.set_main_option("sqlalchemy.url", settings.database_url)
+migration_database_url = settings.database_url.replace("+asyncpg", "+psycopg2")
+config.set_main_option("sqlalchemy.url", migration_database_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
@@ -25,7 +34,7 @@ def run_migrations_offline() -> None:
     """Run migrations without creating a database connection."""
 
     context.configure(
-        url=settings.database_url,
+        url=migration_database_url,
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
@@ -36,31 +45,26 @@ def run_migrations_offline() -> None:
         context.run_migrations()
 
 
-def run_sync_migrations(connection: Connection) -> None:
-    """Configure and run migrations on a synchronous connection proxy."""
+def run_migrations_online() -> None:
+    """Run migrations using a synchronous psycopg2 connection."""
 
-    context.configure(connection=connection, target_metadata=target_metadata, compare_type=True)
-    with context.begin_transaction():
-        context.run_migrations()
-
-
-async def run_migrations_online() -> None:
-    """Create an async engine and run migrations through it."""
-
-    connectable = async_engine_from_config(
+    connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
     )
 
-    async with connectable.connect() as connection:
-        await connection.run_sync(run_sync_migrations)
-
-    await connectable.dispose()
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=True,
+        )
+        with context.begin_transaction():
+            context.run_migrations()
 
 
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run(run_migrations_online())
-
+    run_migrations_online()

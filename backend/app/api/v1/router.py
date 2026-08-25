@@ -1,11 +1,12 @@
 """Version 1 routes, including service health reporting."""
 
-from typing import Literal, TypedDict
+from typing import Literal
 
 from fastapi import APIRouter
+from pydantic import BaseModel
 
 
-class HealthResponse(TypedDict):
+class HealthResponse(BaseModel):
     """Shape returned by the health endpoint."""
 
     status: Literal["healthy"]
@@ -19,5 +20,4 @@ router = APIRouter()
 async def health_check() -> HealthResponse:
     """Return a lightweight service health response."""
 
-    return {"status": "healthy", "service": "AI Learning OS"}
-
+    return HealthResponse(status="healthy", service="AI Learning OS")

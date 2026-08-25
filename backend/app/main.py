@@ -1,9 +1,10 @@
 """FastAPI application entry point and lifecycle management."""
 
-from typing import Literal, TypedDict
+from typing import Literal
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 from sqlalchemy import text
 
 from app.api.v1.router import router as v1_router
@@ -11,7 +12,7 @@ from app.core.config import settings
 from app.core.database import engine
 
 
-class RootResponse(TypedDict):
+class RootResponse(BaseModel):
     """Shape returned by the root endpoint."""
 
     status: Literal["ok"]
@@ -49,5 +50,4 @@ async def disconnect_from_database() -> None:
 async def root() -> RootResponse:
     """Return the API identity and status."""
 
-    return {"status": "ok", "message": "AI Learning OS API"}
-
+    return RootResponse(status="ok", message="AI Learning OS API")

@@ -6,7 +6,7 @@ import uuid
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, Date, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import JSON, Boolean, Date, ForeignKey, Integer, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -33,6 +33,11 @@ class Goal(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     status: Mapped[str] = mapped_column(String(50), nullable=False, default="active")
     target_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     daily_study_minutes: Mapped[int] = mapped_column(Integer, nullable=False, default=60)
+    existing_knowledge: Mapped[str] = mapped_column(Text, nullable=False, default="")
+    ai_summary: Mapped[str | None] = mapped_column(Text, nullable=True)
+    estimated_weeks: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    difficulty_assessment: Mapped[str | None] = mapped_column(String(50), nullable=True)
+    ai_warnings: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
 
     user: Mapped[User] = relationship(back_populates="goals")
     goal_skills: Mapped[list[GoalSkill]] = relationship(
@@ -63,7 +68,7 @@ class GoalSkill(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     )
     priority_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     is_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    reason: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     goal: Mapped[Goal] = relationship(back_populates="goal_skills")
     skill: Mapped[Skill] = relationship(back_populates="goal_skills")
-

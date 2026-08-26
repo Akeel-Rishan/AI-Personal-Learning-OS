@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="flex min-h-screen bg-slate-950 text-slate-100">
-      <aside className={`${isExpanded ? "w-60" : "w-16"} fixed inset-y-0 left-0 z-30 flex flex-col border-r border-slate-800 bg-slate-900 transition-[width] duration-200`}>
+      <aside className={`${isExpanded ? "w-60" : "w-16"} fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-800 bg-slate-900 transition-[width] duration-200 md:flex`}>
         <div className="flex h-16 items-center justify-between border-b border-slate-800 px-4">
           {isExpanded && <Link href="/dashboard" className="truncate font-bold tracking-tight">AI Learning OS</Link>}
           <button type="button" onClick={() => setIsExpanded((value) => !value)} className="rounded-lg p-2 text-slate-400 hover:bg-slate-800 hover:text-white" aria-label="Toggle sidebar">
@@ -71,16 +71,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
+        {isExpanded && <Link href="/goal/new" className="mx-3 mb-3 rounded-xl bg-sky-400 px-4 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-sky-300">+ Set Learning Goal</Link>}
         {isExpanded && <p className="p-4 text-xs leading-5 text-slate-600">Your adaptive learning workspace</p>}
       </aside>
 
-      <div className={`${isExpanded ? "ml-60" : "ml-16"} min-w-0 flex-1 transition-[margin] duration-200`}>
+      <div className={`${isExpanded ? "md:ml-60" : "md:ml-16"} min-w-0 flex-1 transition-[margin] duration-200`}>
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-800 bg-slate-950/90 px-6 backdrop-blur">
           <div>
             <p className="text-sm font-semibold">AI Learning OS</p>
             <p className="text-xs text-slate-500">Personal learning workspace</p>
           </div>
-          <div className="relative">
+          <div className="flex items-center gap-2">
+            <Link href="/goal/new" className="hidden rounded-lg border border-sky-400/30 px-3 py-2 text-xs font-semibold text-sky-300 transition hover:bg-sky-400/10 sm:block">Set Goal</Link>
+            <div className="relative">
             <button type="button" onClick={() => setIsMenuOpen((value) => !value)} className="flex items-center gap-3 rounded-lg p-1.5 pr-3 hover:bg-slate-900" aria-expanded={isMenuOpen}>
               <span className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-sky-400 to-indigo-500 text-sm font-bold text-slate-950">{user.full_name.charAt(0).toUpperCase()}</span>
               <span className="hidden text-left sm:block"><span className="block text-sm font-medium">{user.full_name}</span><span className="block max-w-44 truncate text-xs text-slate-500">{user.email}</span></span>
@@ -94,11 +97,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <button type="button" onClick={() => void logout()} className="w-full rounded-lg px-3 py-2 text-left text-sm text-red-300 hover:bg-red-500/10">Sign Out</button>
               </div>
             )}
+            </div>
           </div>
         </header>
-        <main className="p-6 sm:p-8">{children}</main>
+        <main className="p-4 sm:p-8">{children}</main>
       </div>
     </div>
   );
 }
-

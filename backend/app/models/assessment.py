@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, DateTime, Float, ForeignKey, Integer, JSON, String, Text, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -77,6 +77,13 @@ class AssessmentAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     """A learner's answer and evaluation for one assessment question."""
 
     __tablename__ = "assessment_attempts"
+    __table_args__ = (
+        UniqueConstraint(
+            "assessment_id",
+            "question_id",
+            name="uq_assessment_attempts_assessment_question",
+        ),
+    )
 
     assessment_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("assessments.id", ondelete="CASCADE"), nullable=False
@@ -94,4 +101,3 @@ class AssessmentAttempt(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     assessment: Mapped[Assessment] = relationship(back_populates="attempts")
     question: Mapped[AssessmentQuestion] = relationship(back_populates="attempts")
-

@@ -1,10 +1,7 @@
 // Root layout shared by every page in the frontend.
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import { AuthProvider } from "./providers";
 import "./globals.css";
-
-const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "AI Learning OS",
@@ -18,7 +15,7 @@ export default function RootLayout({
 }>): JSX.Element {
   return (
     <html lang="en" className="dark">
-      <body className={inter.className}>
+      <body>
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>

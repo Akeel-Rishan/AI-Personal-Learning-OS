@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     allowed_origins: list[str] = Field(alias="ALLOWED_ORIGINS")
     access_token_expire_minutes: int = Field(default=30, alias="ACCESS_TOKEN_EXPIRE_MINUTES")
     refresh_token_expire_days: int = Field(default=7, alias="REFRESH_TOKEN_EXPIRE_DAYS")
+    openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
+    openai_model: str = Field(default="gpt-5.4-mini", alias="OPENAI_MODEL")
 
     model_config = SettingsConfigDict(
         env_file=".env",

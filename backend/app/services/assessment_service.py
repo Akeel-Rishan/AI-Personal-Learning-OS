@@ -26,6 +26,7 @@ from app.schemas.assessment import (
 )
 from app.services.answer_evaluator import AnswerEvaluator
 from app.services.question_generator import QuestionGenerator
+from app.services.gamification_service import GamificationService
 
 
 class AssessmentService:
@@ -257,6 +258,9 @@ class AssessmentService:
         assessment.status = "completed"
         assessment.completed_questions = assessment.total_questions
         assessment.completed_at = now
+        gamification = GamificationService(self.db)
+        await gamification.award_xp(str(assessment.user_id), "assessment_passed", 150, f"Completed assessment {assessment.id}")
+        await gamification.check_and_award_achievements(str(assessment.user_id))
 
     @classmethod
     def _calculate_skill_score(cls, attempts: Iterable[AssessmentAttempt]) -> float:

@@ -72,7 +72,7 @@ export default function AssessmentPage(): JSX.Element {
 
   const next = (): void => {
     if (!feedback || !nextReady) return;
-    if (feedback.is_assessment_complete) { sessionStorage.removeItem(key); router.push(`/assessment/results/${id}`); return; }
+    if (feedback.is_assessment_complete) { sessionStorage.removeItem(key); window.dispatchEvent(new Event("learning-progress-updated")); router.push(`/assessment/results/${id}`); return; }
     setTransitioning(true);
     window.setTimeout(() => { setQuestion(feedback.next_question); setAnswer(""); setFeedback(null); setNextReady(false); setQuestionStartedAt(Date.now()); setTransitioning(false); }, 250);
   };

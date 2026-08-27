@@ -10,8 +10,11 @@ import type { GoalDetail } from "@/lib/goals";
 import type { Roadmap } from "@/lib/roadmaps";
 import type { DailyPlan } from "@/lib/plans";
 import type { Recommendation } from "@/lib/exercises";
+import type { StreakInfo, XPSummary } from "@/lib/progress";
+import { XPProgressBar } from "@/components/progress/XPProgressBar";
+import { AchievementToast } from "@/components/gamification/AchievementToast";
 
-type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart";
+type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart" | "trophy";
 
 const navigation: ReadonlyArray<{ label: string; href: string; icon: IconName }> = [
   { label: "Dashboard", href: "/dashboard", icon: "home" },
@@ -20,6 +23,7 @@ const navigation: ReadonlyArray<{ label: string; href: string; icon: IconName }>
   { label: "Practice", href: "/exercises", icon: "zap" },
   { label: "AI Tutor", href: "/tutor", icon: "message" },
   { label: "Progress", href: "/progress", icon: "chart" },
+  { label: "Achievements", href: "/achievements", icon: "trophy" },
 ];
 
 function NavigationIcon({ name }: { name: IconName }): JSX.Element {
@@ -30,6 +34,7 @@ function NavigationIcon({ name }: { name: IconName }): JSX.Element {
     zap: <path d="M13 2 3 14h9l-1 8 10-12h-9Z" />,
     message: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
     chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
+    trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0">{paths[name]}</svg>;
 }
@@ -43,6 +48,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [roadmapProgress, setRoadmapProgress] = useState<number | null>(null);
   const [pendingPlanItems, setPendingPlanItems] = useState<number | null>(null);
   const [practiceWarning, setPracticeWarning] = useState(false);
+  const [xp, setXp] = useState<XPSummary | null>(null);
+  const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -55,6 +62,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .then((goal) => apiGet<Roadmap>(`/api/v1/roadmaps/goal/${goal.id}`))
       .then((roadmap) => { if (active) setRoadmapProgress(roadmap.overall_progress_percentage); })
       .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setRoadmapProgress(null); });
+    return () => { active = false; };
+  }, [isAuthenticated, pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    Promise.all([
+      apiGet<XPSummary>("/api/v1/gamification/xp"),
+      apiGet<StreakInfo>("/api/v1/gamification/streak"),
+    ]).then(([xpValue, streakValue]) => { if (active) { setXp(xpValue); setStreakInfo(streakValue); } }).catch(() => undefined);
     return () => { active = false; };
   }, [isAuthenticated, pathname]);
 
@@ -108,6 +125,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             );
           })}
         </nav>
+        {isExpanded && xp && <div className="mx-3 mb-3"><XPProgressBar xp={xp} compact /></div>}
         {isExpanded && <Link href="/goal/new" className="mx-3 mb-3 rounded-xl bg-sky-400 px-4 py-3 text-center text-sm font-bold text-slate-950 transition hover:bg-sky-300">+ Set Learning Goal</Link>}
         {isExpanded && <p className="p-4 text-xs leading-5 text-slate-600">Your adaptive learning workspace</p>}
       </aside>
@@ -119,6 +137,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <p className="text-xs text-slate-500">Personal learning workspace</p>
           </div>
           <div className="flex items-center gap-2">
+            {xp && <Link href="/progress" className="hidden items-center gap-2 rounded-lg border border-indigo-400/20 bg-indigo-400/5 px-3 py-2 text-xs sm:flex"><b className="text-indigo-300">Lv {xp.level}</b><span className="text-slate-400">{xp.total_xp} XP</span></Link>}
+            {streakInfo && <Link href="/progress?tab=activity" className={`rounded-lg px-3 py-2 text-sm font-bold ${streakInfo.streak_at_risk ? "bg-amber-400/10 text-amber-300" : "text-orange-300"}`} title={streakInfo.streak_at_risk ? "Complete learning activity today to keep your streak" : "Current learning streak"}>🔥 {streakInfo.current_streak}</Link>}
+            <Link href="/progress?tab=achievements" aria-label="Achievement notifications" className="rounded-lg p-2 text-slate-400 hover:bg-slate-900 hover:text-white"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-5 w-5"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4" /></svg></Link>
             <Link href="/goal/new" className="hidden rounded-lg border border-sky-400/30 px-3 py-2 text-xs font-semibold text-sky-300 transition hover:bg-sky-400/10 sm:block">Set Goal</Link>
             <div className="relative">
             <button type="button" onClick={() => setIsMenuOpen((value) => !value)} className="flex items-center gap-3 rounded-lg p-1.5 pr-3 hover:bg-slate-900" aria-expanded={isMenuOpen}>
@@ -139,6 +160,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </header>
         <main className="p-4 sm:p-8">{children}</main>
       </div>
+      <AchievementToast />
     </div>
   );
 }

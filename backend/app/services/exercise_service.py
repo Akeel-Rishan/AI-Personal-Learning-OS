@@ -15,7 +15,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from app.models.exercise import Exercise, ExerciseAttempt
-from app.models.gamification import XPEvent
 from app.models.progress import SkillHistory, UserSkill
 from app.models.skill import Skill
 from app.schemas.exercise import (
@@ -29,6 +28,7 @@ from app.schemas.exercise import (
 )
 from app.services.ai_service import AIService, AIServiceResponseError, AIServiceUnavailable
 from app.services.code_review_service import CodeReviewService
+from app.services.gamification_service import GamificationService
 
 
 class ExerciseService:
@@ -173,10 +173,11 @@ class ExerciseService:
             parsed_user, exercise.skill_id, is_correct, attempt_number, attempt.id
         )
         if is_correct:
-            self.db.add(XPEvent(
-                user_id=parsed_user, event_type="exercise_completed", xp_earned=30,
-                description=f"[exercise:{exercise.id}] Completed {exercise.title}"[:300],
-            ))
+            await GamificationService(self.db).award_xp(
+                user_id, "exercise_completed", 30,
+                f"[exercise:{exercise.id}] Completed {exercise.title}"[:300],
+            )
+        await GamificationService(self.db).check_and_award_achievements(user_id)
         await self.db.commit()
         weakness = await self.detect_weakness_patterns(user_id, str(exercise.skill_id)) if not is_correct and exercise.skill_id else None
         next_hint_index = attempt.hints_used

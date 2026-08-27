@@ -29,6 +29,7 @@ from app.schemas.plan import (
 )
 from app.services.ai_service import AIService, AIServiceResponseError, AIServiceUnavailable
 from app.services.roadmap_service import RoadmapService
+from app.services.gamification_service import GamificationService
 from app.services.spaced_repetition import SpacedRepetitionScheduler
 
 
@@ -336,6 +337,8 @@ class PlanService:
             streak = await self.get_streak_count(user_id)
             if streak in STREAK_XP:
                 await self.award_xp(user_id, "streak_milestone", STREAK_XP[streak], f"[plan:{plan.id}] Reached a {streak}-day streak")
+        if new_status == "completed":
+            await GamificationService(self.db).check_and_award_achievements(user_id)
         await self.db.commit()
         refreshed = await self._get_item(item_id, user_id)
         assert refreshed is not None
@@ -419,14 +422,7 @@ class PlanService:
         return int(value or 0)
 
     async def award_xp(self, user_id: str, event_type: str, xp_amount: int, description: str) -> XPEvent:
-        event = XPEvent(
-            user_id=self._parse_uuid(user_id),
-            event_type=event_type,
-            xp_earned=xp_amount,
-            description=description[:300],
-        )
-        self.db.add(event)
-        return event
+        return await GamificationService(self.db).award_xp(user_id, event_type, xp_amount, description[:300])
 
     @classmethod
     def serialize_plan(cls, plan: DailyPlan) -> DailyPlanResponse:

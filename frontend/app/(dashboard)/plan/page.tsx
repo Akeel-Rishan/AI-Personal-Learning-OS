@@ -79,6 +79,7 @@ export default function PlanPage(): JSX.Element {
     queue.current = queue.current.then(async () => {
       try {
         await apiPatch<DailyPlanItem>(`/api/v1/plans/items/${item.id}`, { status, time_spent_minutes: minutes ?? null });
+        window.dispatchEvent(new Event("learning-progress-updated"));
         const refreshed = await apiGet<DailyPlan>(`/api/v1/plans/${plan.id}`);
         setPlan(refreshed);
         if (refreshed.status === "completed") {

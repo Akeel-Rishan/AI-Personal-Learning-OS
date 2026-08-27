@@ -2,6 +2,8 @@
 
 from datetime import datetime
 
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, field_validator
 
 
@@ -41,3 +43,10 @@ class UserWithProfileResponse(UserResponse):
 
     profile: UserProfileResponse | None
 
+
+class UserProfileUpdateRequest(BaseModel):
+    """Editable tutor-facing learner preferences."""
+
+    preferred_explanation_style: Literal[
+        "visual", "mathematical", "step_by_step", "analogies", "balanced"
+    ]

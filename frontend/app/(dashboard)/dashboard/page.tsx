@@ -6,6 +6,7 @@ import { ApiError, apiGet } from "@/lib/api";
 import type { AssessmentResults, AssessmentStatus } from "@/lib/assessments";
 import type { GoalDetail } from "@/lib/goals";
 import type { Roadmap } from "@/lib/roadmaps";
+import type { DailyPlan, StreakInfo } from "@/lib/plans";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 function greetingForHour(hour: number): string {
@@ -23,6 +24,8 @@ export default function DashboardPage(): JSX.Element {
   const [assessmentResults, setAssessmentResults] = useState<AssessmentResults | null>(null);
   const [assessmentChecked, setAssessmentChecked] = useState(false);
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
+  const [todayPlan, setTodayPlan] = useState<DailyPlan | null>(null);
+  const [streak, setStreak] = useState(0);
   const firstName = user?.full_name.trim().split(/\s+/)[0] || "Learner";
 
   useEffect(() => {
@@ -53,6 +56,14 @@ export default function DashboardPage(): JSX.Element {
       .finally(() => { if (active) setAssessmentChecked(true); });
     return () => { active = false; };
   }, [goal]);
+
+  useEffect(() => {
+    let active = true;
+    Promise.all([apiGet<DailyPlan>("/api/v1/plans/today"), apiGet<StreakInfo>("/api/v1/plans/streak")])
+      .then(([plan, streakInfo]) => { if (active) { setTodayPlan(plan); setStreak(streakInfo.current_streak); } })
+      .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setError(true); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     if (!goal) return;
@@ -107,12 +118,14 @@ export default function DashboardPage(): JSX.Element {
         return <section className="mt-6 rounded-2xl border border-indigo-400/20 bg-slate-900/60 p-6 sm:p-7"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><p className="text-xs font-bold uppercase tracking-wider text-indigo-300">Your Roadmap Progress</p><h2 className="mt-2 text-xl font-bold">{activePhase ? `Current Phase: ${activePhase.title}` : "Roadmap complete"}</h2></div><Link href="/roadmap" className="font-semibold text-sky-300">View Full Roadmap →</Link></div><div className="mt-5 flex items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-sky-400" style={{ width: `${roadmap.overall_progress_percentage}%` }} /></div><span className="text-sm font-bold">{Math.round(roadmap.overall_progress_percentage)}%</span></div><p className="mt-2 text-xs text-slate-500">{roadmap.completed_items} of {roadmap.total_items} items completed</p>{nextItems.length > 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{nextItems.map((item) => <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"><p className="text-xs font-bold uppercase text-slate-500">Next up · {item.item_type}</p><p className="mt-2 truncate font-semibold">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.estimated_minutes ?? 0} min</p></div>)}</div>}</section>;
       })()}
 
+      {todayPlan && <section className="mt-6 rounded-2xl border border-sky-400/20 bg-slate-900/60 p-6 sm:p-7"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><p className="text-xs font-bold uppercase tracking-wider text-sky-300">Today&apos;s Learning Plan</p><h2 className="mt-2 text-xl font-bold">{todayPlan.status === "completed" ? "✅ Plan complete! See you tomorrow." : `${todayPlan.completed_items_count} of ${todayPlan.total_items_count} tasks complete`}</h2></div><Link href="/plan" className="font-semibold text-sky-300">Open Full Plan →</Link></div><div className="mt-5 grid gap-2">{todayPlan.items.slice(0, 5).map((item) => <div key={item.id} className="flex items-center gap-3 text-sm"><span className={item.status === "completed" ? "text-emerald-400" : item.status === "in_progress" ? "text-sky-400" : "text-slate-600"}>{item.status === "completed" ? "✓" : item.status === "in_progress" ? "▶" : item.status === "skipped" ? "−" : "○"}</span><span className={`min-w-0 flex-1 truncate ${item.status === "completed" ? "text-slate-500 line-through" : "text-slate-300"}`}>{item.title}</span><span className="text-xs text-slate-600">{item.estimated_minutes}m</span></div>)}</div><p className="mt-4 text-xs text-slate-500">{todayPlan.total_estimated_minutes} min total · 🔥 {streak}-day streak</p></section>}
+
       {error && <p className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">We couldn&apos;t refresh your active goal. The rest of your dashboard is still available.</p>}
 
       <section className="mt-6 grid gap-4 md:grid-cols-3">
         <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><p className="text-sm text-slate-400">Current Goal</p><p className="mt-3 text-xl font-semibold">{goal ? "In progress" : "Not set yet"}</p></article>
-        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><p className="text-sm text-slate-400">Today&apos;s Tasks</p><p className="mt-3 text-xl font-semibold">0 tasks</p></article>
-        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><p className="text-sm text-slate-400">Learning Streak</p><p className="mt-3 text-xl font-semibold">0 days 🔥</p></article>
+        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><p className="text-sm text-slate-400">Today&apos;s Tasks</p><p className="mt-3 text-xl font-semibold">{todayPlan ? `${todayPlan.completed_items_count}/${todayPlan.total_items_count} complete` : "No plan yet"}</p></article>
+        <article className="rounded-2xl border border-slate-800 bg-slate-900/60 p-6"><p className="text-sm text-slate-400">Learning Streak</p><p className="mt-3 text-xl font-semibold">{streak} days 🔥</p></article>
       </section>
     </div>
   );

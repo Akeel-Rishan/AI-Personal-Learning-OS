@@ -1,0 +1,5 @@
+"use client";
+
+export function SuggestedPrompts({ prompts, loading, onSelect, onRefresh }: { prompts: string[]; loading: boolean; onSelect: (prompt: string) => void; onRefresh: () => void }): JSX.Element {
+  return <section className="w-full"><div className="mb-3 flex items-center justify-between"><p className="text-sm font-semibold text-slate-300">Suggested questions for you</p><button type="button" disabled={loading} onClick={onRefresh} className="text-xs font-semibold text-sky-300 disabled:opacity-50">Refresh suggestions ↻</button></div><div className="grid gap-3 sm:grid-cols-2">{loading && prompts.length === 0 ? Array.from({ length: 4 }, (_, index) => <div key={index} className="h-20 animate-pulse rounded-xl bg-slate-900" />) : prompts.map((prompt) => <button type="button" key={prompt} onClick={() => onSelect(prompt)} className="rounded-xl border border-slate-800 bg-slate-900/70 p-4 text-left text-sm leading-6 text-slate-300 transition hover:scale-[1.01] hover:border-sky-400/40 hover:shadow-lg hover:shadow-sky-950/20"><span className="mr-2 text-amber-300">💡</span>{prompt}</button>)}</div></section>;
+}

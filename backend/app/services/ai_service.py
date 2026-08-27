@@ -78,6 +78,46 @@ class AIService:
             max_output_tokens,
         )
 
+    async def generate_text(
+        self,
+        *,
+        instructions: str,
+        messages: list[dict[str, str]] | str,
+        max_output_tokens: int = 2048,
+    ) -> dict[str, Any]:
+        """Generate plain text and return normalized usage metadata."""
+
+        if self.client is None:
+            raise AIServiceUnavailable(
+                "OpenAI is not configured yet. Add OPENAI_API_KEY to backend/.env and restart the backend."
+            )
+        return await asyncio.to_thread(
+            self._generate_text_sync, instructions, messages, max_output_tokens
+        )
+
+    def _generate_text_sync(
+        self,
+        instructions: str,
+        messages: list[dict[str, str]] | str,
+        max_output_tokens: int,
+    ) -> dict[str, Any]:
+        if self.client is None:
+            raise AIServiceUnavailable("OpenAI is not configured")
+        response = self.client.responses.create(
+            model=self.model,
+            instructions=instructions,
+            input=messages,
+            max_output_tokens=max_output_tokens,
+            store=False,
+        )
+        usage = getattr(response, "usage", None)
+        return {
+            "content": response.output_text or "",
+            "model": getattr(response, "model", self.model),
+            "input_tokens": int(getattr(usage, "input_tokens", 0) or 0),
+            "output_tokens": int(getattr(usage, "output_tokens", 0) or 0),
+        }
+
     def _generate_structured_sync(
         self,
         instructions: str,

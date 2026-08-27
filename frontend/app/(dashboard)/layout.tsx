@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { ApiError, apiGet } from "@/lib/api";
 import type { GoalDetail } from "@/lib/goals";
 import type { Roadmap } from "@/lib/roadmaps";
+import type { DailyPlan } from "@/lib/plans";
 
 type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart";
 
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [roadmapProgress, setRoadmapProgress] = useState<number | null>(null);
+  const [pendingPlanItems, setPendingPlanItems] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -53,6 +55,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setRoadmapProgress(null); });
     return () => { active = false; };
   }, [isAuthenticated, pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    apiGet<DailyPlan>("/api/v1/plans/today")
+      .then((plan) => { if (active) setPendingPlanItems(plan.items.filter((item) => !["completed", "skipped"].includes(item.status)).length); })
+      .catch(() => { if (active) setPendingPlanItems(null); });
+    return () => { active = false; };
+  }, [isAuthenticated]);
 
   if (isLoading || !isAuthenticated || !user) {
     return (
@@ -80,7 +91,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             return (
               <Link key={item.href} href={item.href} title={isExpanded ? undefined : item.label} className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${isActive ? "bg-sky-400/10 text-sky-300" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
                 <NavigationIcon name={item.icon} />
-                {isExpanded && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>{item.label}</span>{item.href === "/roadmap" && roadmapProgress !== null && <span className="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] text-sky-300">{Math.round(roadmapProgress)}%</span>}</span>}
+                {isExpanded && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>{item.label}</span>{item.href === "/roadmap" && roadmapProgress !== null && <span className="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] text-sky-300">{Math.round(roadmapProgress)}%</span>}{item.href === "/plan" && pendingPlanItems !== null && pendingPlanItems > 0 && <span className="rounded-full bg-orange-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">{pendingPlanItems}</span>}{item.href === "/tutor" && <span title="Tutor online" className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.7)]" />}</span>}
               </Link>
             );
           })}

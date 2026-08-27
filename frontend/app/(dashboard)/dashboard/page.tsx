@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { ApiError, apiGet } from "@/lib/api";
 import type { AssessmentResults, AssessmentStatus } from "@/lib/assessments";
 import type { GoalDetail } from "@/lib/goals";
+import type { Roadmap } from "@/lib/roadmaps";
 import { useAuth } from "@/lib/hooks/useAuth";
 
 function greetingForHour(hour: number): string {
@@ -21,6 +22,7 @@ export default function DashboardPage(): JSX.Element {
   const [assessment, setAssessment] = useState<AssessmentStatus | null>(null);
   const [assessmentResults, setAssessmentResults] = useState<AssessmentResults | null>(null);
   const [assessmentChecked, setAssessmentChecked] = useState(false);
+  const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const firstName = user?.full_name.trim().split(/\s+/)[0] || "Learner";
 
   useEffect(() => {
@@ -49,6 +51,15 @@ export default function DashboardPage(): JSX.Element {
       })
       .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setError(true); })
       .finally(() => { if (active) setAssessmentChecked(true); });
+    return () => { active = false; };
+  }, [goal]);
+
+  useEffect(() => {
+    if (!goal) return;
+    let active = true;
+    apiGet<Roadmap>(`/api/v1/roadmaps/goal/${goal.id}`)
+      .then((value) => { if (active) setRoadmap(value); })
+      .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setError(true); });
     return () => { active = false; };
   }, [goal]);
 
@@ -89,6 +100,12 @@ export default function DashboardPage(): JSX.Element {
           <div className="mt-5 grid gap-5 sm:grid-cols-2"><div><p className="text-sm font-semibold text-slate-300">Strongest skills</p><div className="mt-2 flex flex-wrap gap-2">{assessmentResults.skill_scores.slice(0, 3).map((skill) => <span key={skill.skill_id} className="rounded-full bg-emerald-400/10 px-3 py-1 text-xs text-emerald-200">{skill.skill_name} · {Math.round(skill.mastery_percentage)}%</span>)}</div></div><div><p className="text-sm font-semibold text-slate-300">Focus areas</p><div className="mt-2 flex flex-wrap gap-2">{[...assessmentResults.skill_scores].sort((left, right) => left.mastery_score - right.mastery_score).slice(0, 3).map((skill) => <span key={skill.skill_id} className="rounded-full bg-amber-400/10 px-3 py-1 text-xs text-amber-200">{skill.skill_name} · {Math.round(skill.mastery_percentage)}%</span>)}</div></div></div>
         </section>
       )}
+
+      {roadmap && (() => {
+        const activePhase = roadmap.phases.find((phase) => phase.status === "active");
+        const nextItems = activePhase?.items.filter((item) => item.status === "pending").slice(0, 2) ?? [];
+        return <section className="mt-6 rounded-2xl border border-indigo-400/20 bg-slate-900/60 p-6 sm:p-7"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><p className="text-xs font-bold uppercase tracking-wider text-indigo-300">Your Roadmap Progress</p><h2 className="mt-2 text-xl font-bold">{activePhase ? `Current Phase: ${activePhase.title}` : "Roadmap complete"}</h2></div><Link href="/roadmap" className="font-semibold text-sky-300">View Full Roadmap →</Link></div><div className="mt-5 flex items-center gap-3"><div className="h-2 flex-1 overflow-hidden rounded-full bg-slate-800"><div className="h-full rounded-full bg-gradient-to-r from-indigo-400 to-sky-400" style={{ width: `${roadmap.overall_progress_percentage}%` }} /></div><span className="text-sm font-bold">{Math.round(roadmap.overall_progress_percentage)}%</span></div><p className="mt-2 text-xs text-slate-500">{roadmap.completed_items} of {roadmap.total_items} items completed</p>{nextItems.length > 0 && <div className="mt-5 grid gap-3 sm:grid-cols-2">{nextItems.map((item) => <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4"><p className="text-xs font-bold uppercase text-slate-500">Next up · {item.item_type}</p><p className="mt-2 truncate font-semibold">{item.title}</p><p className="mt-1 text-xs text-slate-500">{item.estimated_minutes ?? 0} min</p></div>)}</div>}</section>;
+      })()}
 
       {error && <p className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">We couldn&apos;t refresh your active goal. The rest of your dashboard is still available.</p>}
 

@@ -5,6 +5,9 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { ApiError, apiGet } from "@/lib/api";
+import type { GoalDetail } from "@/lib/goals";
+import type { Roadmap } from "@/lib/roadmaps";
 
 type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart";
 
@@ -35,10 +38,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const { user, isLoading, isAuthenticated, logout } = useAuth();
   const [isExpanded, setIsExpanded] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [roadmapProgress, setRoadmapProgress] = useState<number | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
   }, [isAuthenticated, isLoading, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    apiGet<GoalDetail>("/api/v1/goals/active")
+      .then((goal) => apiGet<Roadmap>(`/api/v1/roadmaps/goal/${goal.id}`))
+      .then((roadmap) => { if (active) setRoadmapProgress(roadmap.overall_progress_percentage); })
+      .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setRoadmapProgress(null); });
+    return () => { active = false; };
+  }, [isAuthenticated, pathname]);
 
   if (isLoading || !isAuthenticated || !user) {
     return (
@@ -66,7 +80,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             return (
               <Link key={item.href} href={item.href} title={isExpanded ? undefined : item.label} className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${isActive ? "bg-sky-400/10 text-sky-300" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
                 <NavigationIcon name={item.icon} />
-                {isExpanded && <span>{item.label}</span>}
+                {isExpanded && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>{item.label}</span>{item.href === "/roadmap" && roadmapProgress !== null && <span className="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] text-sky-300">{Math.round(roadmapProgress)}%</span>}</span>}
               </Link>
             );
           })}

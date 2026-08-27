@@ -10,6 +10,7 @@ export interface DailyPlanItem {
   status: PlanItemStatus;
   skill_id: string | null;
   skill_name: string | null;
+  skill_slug: string | null;
   roadmap_item_id: string | null;
   completed_at: string | null;
 }

@@ -453,6 +453,7 @@ class PlanService:
             estimated_minutes=item.estimated_minutes, status=item.status,
             skill_id=str(item.skill_id) if item.skill_id else None,
             skill_name=item.skill.name if item.skill else None,
+            skill_slug=item.skill.slug if item.skill else None,
             roadmap_item_id=str(item.roadmap_item_id) if item.roadmap_item_id else None,
             completed_at=item.completed_at,
         )

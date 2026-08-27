@@ -132,7 +132,7 @@ class TutorService:
         streak = await plan_service.get_streak_count(user_id)
         total_xp = await plan_service.get_user_total_xp(user_id)
         goal_skills = [
-            {"id": str(link.skill.id), "name": link.skill.name}
+            {"id": str(link.skill.id), "name": link.skill.name, "slug": link.skill.slug}
             for link in sorted(goal.goal_skills, key=lambda item: item.priority_order)
         ] if goal else []
 

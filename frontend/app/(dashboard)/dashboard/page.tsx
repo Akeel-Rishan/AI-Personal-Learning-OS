@@ -8,6 +8,7 @@ import type { GoalDetail } from "@/lib/goals";
 import type { Roadmap } from "@/lib/roadmaps";
 import type { DailyPlan, StreakInfo } from "@/lib/plans";
 import { useAuth } from "@/lib/hooks/useAuth";
+import type { Recommendation } from "@/lib/exercises";
 
 function greetingForHour(hour: number): string {
   if (hour < 12) return "morning";
@@ -26,6 +27,7 @@ export default function DashboardPage(): JSX.Element {
   const [roadmap, setRoadmap] = useState<Roadmap | null>(null);
   const [todayPlan, setTodayPlan] = useState<DailyPlan | null>(null);
   const [streak, setStreak] = useState(0);
+  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const firstName = user?.full_name.trim().split(/\s+/)[0] || "Learner";
 
   useEffect(() => {
@@ -62,6 +64,14 @@ export default function DashboardPage(): JSX.Element {
     Promise.all([apiGet<DailyPlan>("/api/v1/plans/today"), apiGet<StreakInfo>("/api/v1/plans/streak")])
       .then(([plan, streakInfo]) => { if (active) { setTodayPlan(plan); setStreak(streakInfo.current_streak); } })
       .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setError(true); });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    apiGet<Recommendation[]>("/api/v1/exercises/recommended?limit=2")
+      .then((items) => { if (active) setRecommendations(items); })
+      .catch(() => undefined);
     return () => { active = false; };
   }, []);
 
@@ -119,6 +129,8 @@ export default function DashboardPage(): JSX.Element {
       })()}
 
       {todayPlan && <section className="mt-6 rounded-2xl border border-sky-400/20 bg-slate-900/60 p-6 sm:p-7"><div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start"><div><p className="text-xs font-bold uppercase tracking-wider text-sky-300">Today&apos;s Learning Plan</p><h2 className="mt-2 text-xl font-bold">{todayPlan.status === "completed" ? "✅ Plan complete! See you tomorrow." : `${todayPlan.completed_items_count} of ${todayPlan.total_items_count} tasks complete`}</h2></div><Link href="/plan" className="font-semibold text-sky-300">Open Full Plan →</Link></div><div className="mt-5 grid gap-2">{todayPlan.items.slice(0, 5).map((item) => <div key={item.id} className="flex items-center gap-3 text-sm"><span className={item.status === "completed" ? "text-emerald-400" : item.status === "in_progress" ? "text-sky-400" : "text-slate-600"}>{item.status === "completed" ? "✓" : item.status === "in_progress" ? "▶" : item.status === "skipped" ? "−" : "○"}</span><span className={`min-w-0 flex-1 truncate ${item.status === "completed" ? "text-slate-500 line-through" : "text-slate-300"}`}>{item.title}</span><span className="text-xs text-slate-600">{item.estimated_minutes}m</span></div>)}</div><p className="mt-4 text-xs text-slate-500">{todayPlan.total_estimated_minutes} min total · 🔥 {streak}-day streak</p></section>}
+
+      {recommendations.length > 0 && <section className="mt-6 rounded-2xl border border-purple-400/20 bg-slate-900/60 p-6 sm:p-7"><div className="flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-wider text-purple-300">Recommended Practice</p><h2 className="mt-2 text-xl font-bold">Strengthen your weakest skills</h2></div><Link href="/exercises" className="text-sm font-semibold text-sky-300">View all →</Link></div><div className="mt-5 grid gap-3 sm:grid-cols-2">{recommendations.map((item) => <Link key={item.exercise.id} href={`/exercises/practice/${item.skill_slug}`} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4 transition hover:border-purple-400/40"><div className="flex items-center justify-between gap-3"><p className="font-semibold">{item.exercise.title}</p><span className="shrink-0 text-xs text-amber-300">{Math.round(item.skill_mastery * 100)}%</span></div><p className="mt-2 text-xs text-slate-500">{item.skill_name} · {item.reason}</p></Link>)}</div></section>}
 
       {error && <p className="mt-4 rounded-xl border border-amber-400/20 bg-amber-400/5 px-4 py-3 text-sm text-amber-200">We couldn&apos;t refresh your active goal. The rest of your dashboard is still available.</p>}
 

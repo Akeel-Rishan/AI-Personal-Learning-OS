@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.assessments import router as assessments_router
 from app.api.v1.endpoints.goals import router as goals_router
+from app.api.v1.endpoints.exercises import router as exercises_router
 from app.api.v1.endpoints.plans import router as plans_router
 from app.api.v1.endpoints.roadmaps import router as roadmaps_router
 from app.api.v1.endpoints.skills import router as skills_router
@@ -26,6 +27,7 @@ router = APIRouter()
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 router.include_router(assessments_router, prefix="/assessments", tags=["Assessments"])
 router.include_router(goals_router, prefix="/goals", tags=["Goals"])
+router.include_router(exercises_router, prefix="/exercises", tags=["Exercises"])
 router.include_router(plans_router, prefix="/plans", tags=["Daily Plans"])
 router.include_router(roadmaps_router, prefix="/roadmaps", tags=["Roadmaps"])
 router.include_router(skills_router, prefix="/skills", tags=["Skills"])

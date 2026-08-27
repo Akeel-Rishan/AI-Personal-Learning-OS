@@ -16,6 +16,7 @@ class DailyPlanItemResponse(BaseModel):
     status: str
     skill_id: str | None
     skill_name: str | None
+    skill_slug: str | None
     roadmap_item_id: str | None
     completed_at: datetime | None
 

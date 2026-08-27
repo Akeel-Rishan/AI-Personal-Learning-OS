@@ -37,7 +37,7 @@ export interface TutorSkillMastery {
   level: "weak" | "developing" | "strong";
 }
 
-export interface GoalSkillOption { id: string; name: string }
+export interface GoalSkillOption { id: string; name: string; slug: string }
 
 export interface LearnerContext {
   user_name: string;

@@ -9,6 +9,7 @@ import { ApiError, apiGet } from "@/lib/api";
 import type { GoalDetail } from "@/lib/goals";
 import type { Roadmap } from "@/lib/roadmaps";
 import type { DailyPlan } from "@/lib/plans";
+import type { Recommendation } from "@/lib/exercises";
 
 type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart";
 
@@ -16,7 +17,7 @@ const navigation: ReadonlyArray<{ label: string; href: string; icon: IconName }>
   { label: "Dashboard", href: "/dashboard", icon: "home" },
   { label: "My Roadmap", href: "/roadmap", icon: "map" },
   { label: "Daily Plan", href: "/plan", icon: "calendar" },
-  { label: "Skills", href: "/skills", icon: "zap" },
+  { label: "Practice", href: "/exercises", icon: "zap" },
   { label: "AI Tutor", href: "/tutor", icon: "message" },
   { label: "Progress", href: "/progress", icon: "chart" },
 ];
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [roadmapProgress, setRoadmapProgress] = useState<number | null>(null);
   const [pendingPlanItems, setPendingPlanItems] = useState<number | null>(null);
+  const [practiceWarning, setPracticeWarning] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) router.replace("/login");
@@ -65,6 +67,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return () => { active = false; };
   }, [isAuthenticated]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    apiGet<Recommendation[]>("/api/v1/exercises/recommended?limit=1")
+      .then((items) => { if (active) setPracticeWarning(items.some((item) => item.skill_mastery < 0.5)); })
+      .catch(() => { if (active) setPracticeWarning(false); });
+    return () => { active = false; };
+  }, [isAuthenticated, pathname]);
+
   if (isLoading || !isAuthenticated || !user) {
     return (
       <main className="flex min-h-screen items-center justify-center bg-slate-950">
@@ -86,7 +97,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </button>
         </div>
         <nav className="flex-1 space-y-1 p-2 pt-5">
-          {navigation.map((item) => {
+          {navigation.map((entry) => {
+            const item = entry.href === "/exercises" && practiceWarning ? { ...entry, label: `${entry.label} ⚠` } : entry;
             const isActive = pathname === item.href;
             return (
               <Link key={item.href} href={item.href} title={isExpanded ? undefined : item.label} className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${isActive ? "bg-sky-400/10 text-sky-300" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>

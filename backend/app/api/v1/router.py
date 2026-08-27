@@ -6,6 +6,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.adaptive import router as adaptive_router
 from app.api.v1.endpoints.assessments import router as assessments_router
 from app.api.v1.endpoints.goals import router as goals_router
 from app.api.v1.endpoints.exercises import router as exercises_router
@@ -26,6 +27,7 @@ class HealthResponse(BaseModel):
 
 
 router = APIRouter()
+router.include_router(adaptive_router, prefix="/adaptive", tags=["Adaptive Learning"])
 router.include_router(auth_router, prefix="/auth", tags=["Authentication"])
 router.include_router(assessments_router, prefix="/assessments", tags=["Assessments"])
 router.include_router(goals_router, prefix="/goals", tags=["Goals"])

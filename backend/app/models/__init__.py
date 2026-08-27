@@ -1,6 +1,7 @@
 """Re-export every ORM model so metadata discovery is deterministic."""
 
 from app.models.assessment import Assessment, AssessmentAttempt, AssessmentQuestion
+from app.models.adaptive import AdaptationEvent, KnowledgeGap
 from app.models.conversation import TutorConversation, TutorMessage
 from app.models.exercise import Exercise, ExerciseAttempt
 from app.models.gamification import Achievement, UserAchievement, XPEvent
@@ -13,6 +14,7 @@ from app.models.user import User, UserProfile
 
 __all__ = [
     "Achievement",
+    "AdaptationEvent",
     "Assessment",
     "AssessmentAttempt",
     "AssessmentQuestion",
@@ -23,6 +25,7 @@ __all__ = [
     "Goal",
     "GoalSkill",
     "LearningSession",
+    "KnowledgeGap",
     "Roadmap",
     "RoadmapItem",
     "RoadmapPhase",

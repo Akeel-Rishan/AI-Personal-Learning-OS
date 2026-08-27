@@ -39,6 +39,7 @@ class RoadmapPhaseResponse(BaseModel):
     items_count: int = 0
     completed_items_count: int = 0
     progress_percentage: float = 0.0
+    phase_metadata: dict[str, object] | None = None
 
 
 class RoadmapResponse(BaseModel):

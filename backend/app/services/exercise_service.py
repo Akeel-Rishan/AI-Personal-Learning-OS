@@ -180,6 +180,17 @@ class ExerciseService:
         await GamificationService(self.db).check_and_award_achievements(user_id)
         await self.db.commit()
         weakness = await self.detect_weakness_patterns(user_id, str(exercise.skill_id)) if not is_correct and exercise.skill_id else None
+        adaptation = None
+        if exercise.skill_id:
+            from app.services.adaptive_engine import AdaptiveEngine
+
+            adaptation = await AdaptiveEngine(self.db).process_exercise_attempt(
+                user_id,
+                str(exercise.skill_id),
+                {"is_correct": is_correct, "new_mastery": user_skill.mastery_score},
+            )
+            if adaptation and adaptation.get("gap_resolved"):
+                await self.db.commit()
         next_hint_index = attempt.hints_used
         hints = exercise.hints or []
         return AttemptFeedbackResponse(
@@ -192,6 +203,8 @@ class ExerciseService:
             next_hint=hints[next_hint_index] if not is_correct and next_hint_index < len(hints) else None,
             attempt_number=attempt_number, mastery_percentage=round(user_skill.mastery_score * 100),
             weakness_detected=weakness,
+            adaptation_triggered=bool(adaptation),
+            adaptation=adaptation,
         )
 
     async def get_hint(self, exercise_id: str, user_id: str, hint_index: int) -> HintResponse:

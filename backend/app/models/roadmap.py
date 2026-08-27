@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text
+from sqlalchemy import DateTime, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -69,6 +69,7 @@ class RoadmapPhase(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     estimated_weeks: Mapped[int | None] = mapped_column(Integer, nullable=True)
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    phase_metadata: Mapped[dict[str, object] | None] = mapped_column("metadata", JSON, nullable=True)
 
     roadmap: Mapped[Roadmap] = relationship(back_populates="phases")
     items: Mapped[list[RoadmapItem]] = relationship(
@@ -101,4 +102,3 @@ class RoadmapItem(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="roadmap_item"
     )
     daily_plan_items: Mapped[list[DailyPlanItem]] = relationship(back_populates="roadmap_item")
-

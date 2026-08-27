@@ -424,6 +424,7 @@ class RoadmapService:
             status=phase.status, estimated_weeks=phase.estimated_weeks, started_at=phase.started_at,
             completed_at=phase.completed_at, items=items, items_count=len(items), completed_items_count=completed,
             progress_percentage=round(completed / len(items) * 100, 1) if items else 0,
+            phase_metadata=phase.phase_metadata,
         )
 
     @staticmethod

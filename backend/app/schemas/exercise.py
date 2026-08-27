@@ -63,6 +63,8 @@ class AttemptFeedbackResponse(BaseModel):
     attempt_number: int
     mastery_percentage: int
     weakness_detected: dict[str, object] | None = None
+    adaptation_triggered: bool = False
+    adaptation: dict[str, object] | None = None
 
 
 class HintResponse(BaseModel):

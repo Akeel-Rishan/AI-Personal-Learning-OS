@@ -10,6 +10,7 @@ from sqlalchemy import text
 from app.api.v1.router import router as v1_router
 from app.core.config import settings
 from app.core.database import engine
+from app.services.adaptive_scheduler import start_adaptive_scheduler, stop_adaptive_scheduler
 
 
 class RootResponse(BaseModel):
@@ -37,12 +38,14 @@ async def connect_to_database() -> None:
 
     async with engine.connect() as connection:
         await connection.execute(text("SELECT 1"))
+    start_adaptive_scheduler()
 
 
 @app.on_event("shutdown")
 async def disconnect_from_database() -> None:
     """Dispose of pooled database connections during shutdown."""
 
+    stop_adaptive_scheduler()
     await engine.dispose()
 
 

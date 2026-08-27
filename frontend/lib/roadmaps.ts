@@ -18,7 +18,7 @@ export interface RoadmapPhase {
   title: string;
   description: string | null;
   order_index: number;
-  status: "locked" | "active" | "completed";
+  status: "locked" | "active" | "paused" | "completed";
   estimated_weeks: number | null;
   started_at: string | null;
   completed_at: string | null;
@@ -26,6 +26,7 @@ export interface RoadmapPhase {
   items_count: number;
   completed_items_count: number;
   progress_percentage: number;
+  phase_metadata: Record<string, unknown> | null;
 }
 
 export interface Roadmap {

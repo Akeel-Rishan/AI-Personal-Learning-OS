@@ -1,0 +1,6 @@
+import type { AdaptationEvent } from "@/lib/adaptive";
+import { GapSeverityBadge } from "./GapSeverityBadge";
+
+export function AdaptationHistory({ events }: { events: AdaptationEvent[] }): JSX.Element {
+  return <section><h2 className="text-xl font-bold">Adaptation history</h2><p className="mt-1 text-sm text-slate-400">A transparent record of how your learning path changed.</p><div className="mt-5 space-y-3">{events.length === 0 && <p className="rounded-xl border border-dashed border-slate-700 p-6 text-sm text-slate-500">No adaptations yet.</p>}{events.map((event) => <article key={event.id} className="flex gap-4 rounded-xl border border-slate-800 bg-slate-900/50 p-4"><div className="mt-1 h-3 w-3 shrink-0 rounded-full bg-sky-400" /><div className="min-w-0 flex-1"><div className="flex flex-wrap items-center gap-2"><h3 className="font-semibold">{event.skill_name || "Learning path"}</h3><GapSeverityBadge severity={event.gap_severity} />{event.is_resolved && <span className="text-xs font-semibold text-emerald-300">Resolved</span>}</div><p className="mt-2 text-sm text-slate-300">{event.action_description}</p><p className="mt-2 text-xs text-slate-500">{new Date(event.created_at).toLocaleString()} · {event.trigger_type.replaceAll("_", " ")}</p></div></article>)}</div></section>;
+}

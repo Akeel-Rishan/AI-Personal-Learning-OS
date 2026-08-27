@@ -13,14 +13,18 @@ import type { Recommendation } from "@/lib/exercises";
 import type { StreakInfo, XPSummary } from "@/lib/progress";
 import { XPProgressBar } from "@/components/progress/XPProgressBar";
 import { AchievementToast } from "@/components/gamification/AchievementToast";
+import { AdaptationBanner } from "@/components/adaptive/AdaptationBanner";
+import { AdaptiveGapWidget } from "@/components/adaptive/AdaptiveGapWidget";
+import { getGapReport } from "@/lib/adaptive";
 
-type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart" | "trophy";
+type IconName = "home" | "map" | "calendar" | "zap" | "message" | "chart" | "trophy" | "alert";
 
 const navigation: ReadonlyArray<{ label: string; href: string; icon: IconName }> = [
   { label: "Dashboard", href: "/dashboard", icon: "home" },
   { label: "My Roadmap", href: "/roadmap", icon: "map" },
   { label: "Daily Plan", href: "/plan", icon: "calendar" },
   { label: "Practice", href: "/exercises", icon: "zap" },
+  { label: "Knowledge Gaps", href: "/gaps", icon: "alert" },
   { label: "AI Tutor", href: "/tutor", icon: "message" },
   { label: "Progress", href: "/progress", icon: "chart" },
   { label: "Achievements", href: "/achievements", icon: "trophy" },
@@ -35,6 +39,7 @@ function NavigationIcon({ name }: { name: IconName }): JSX.Element {
     message: <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z" />,
     chart: <><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></>,
     trophy: <><path d="M8 4h8v5a4 4 0 0 1-8 0Z"/><path d="M8 6H4v1a4 4 0 0 0 4 4M16 6h4v1a4 4 0 0 1-4 4M12 13v4M8 21h8M9 17h6"/></>,
+    alert: <><path d="M12 3 2.5 20h19Z"/><path d="M12 9v5M12 17h.01"/></>,
   };
   return <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="h-5 w-5 shrink-0">{paths[name]}</svg>;
 }
@@ -48,6 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [roadmapProgress, setRoadmapProgress] = useState<number | null>(null);
   const [pendingPlanItems, setPendingPlanItems] = useState<number | null>(null);
   const [practiceWarning, setPracticeWarning] = useState(false);
+  const [activeGapCount, setActiveGapCount] = useState(0);
   const [xp, setXp] = useState<XPSummary | null>(null);
   const [streakInfo, setStreakInfo] = useState<StreakInfo | null>(null);
 
@@ -62,6 +68,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       .then((goal) => apiGet<Roadmap>(`/api/v1/roadmaps/goal/${goal.id}`))
       .then((roadmap) => { if (active) setRoadmapProgress(roadmap.overall_progress_percentage); })
       .catch((reason: unknown) => { if (active && !(reason instanceof ApiError && reason.status === 404)) setRoadmapProgress(null); });
+    return () => { active = false; };
+  }, [isAuthenticated, pathname]);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    let active = true;
+    getGapReport("active").then((value) => { if (active) setActiveGapCount(value.active_gaps.length); }).catch(() => undefined);
     return () => { active = false; };
   }, [isAuthenticated, pathname]);
 
@@ -120,7 +133,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             return (
               <Link key={item.href} href={item.href} title={isExpanded ? undefined : item.label} className={`flex h-11 items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${isActive ? "bg-sky-400/10 text-sky-300" : "text-slate-400 hover:bg-slate-800 hover:text-white"}`}>
                 <NavigationIcon name={item.icon} />
-                {isExpanded && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>{item.label}</span>{item.href === "/roadmap" && roadmapProgress !== null && <span className="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] text-sky-300">{Math.round(roadmapProgress)}%</span>}{item.href === "/plan" && pendingPlanItems !== null && pendingPlanItems > 0 && <span className="rounded-full bg-orange-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">{pendingPlanItems}</span>}{item.href === "/tutor" && <span title="Tutor online" className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.7)]" />}</span>}
+                {isExpanded && <span className="flex min-w-0 flex-1 items-center justify-between gap-2"><span>{item.label}</span>{item.href === "/roadmap" && roadmapProgress !== null && <span className="rounded-full bg-sky-400/10 px-2 py-0.5 text-[10px] text-sky-300">{Math.round(roadmapProgress)}%</span>}{item.href === "/plan" && pendingPlanItems !== null && pendingPlanItems > 0 && <span className="rounded-full bg-orange-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">{pendingPlanItems}</span>}{item.href === "/gaps" && activeGapCount > 0 && <span className="rounded-full bg-red-400 px-2 py-0.5 text-[10px] font-bold text-slate-950">{activeGapCount}</span>}{item.href === "/tutor" && <span title="Tutor online" className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,.7)]" />}</span>}
               </Link>
             );
           })}
@@ -158,7 +171,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           </div>
         </header>
-        <main className="p-4 sm:p-8">{children}</main>
+        <main className="p-4 sm:p-8"><AdaptationBanner />{pathname === "/dashboard" && <div className="mx-auto mb-6 max-w-7xl"><AdaptiveGapWidget /></div>}{children}</main>
       </div>
       <AchievementToast />
     </div>

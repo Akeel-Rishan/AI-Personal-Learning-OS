@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import math
 import uuid
 from datetime import date, datetime, timedelta, timezone
@@ -340,6 +341,10 @@ class PlanService:
         if new_status == "completed":
             await GamificationService(self.db).check_and_award_achievements(user_id)
         await self.db.commit()
+        if plan.status == "completed" and not was_plan_completed:
+            from app.services.adaptive_engine import run_full_scan_background
+
+            asyncio.create_task(run_full_scan_background(user_id))
         refreshed = await self._get_item(item_id, user_id)
         assert refreshed is not None
         return refreshed

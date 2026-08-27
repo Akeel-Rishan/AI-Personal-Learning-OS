@@ -182,6 +182,19 @@ class AssessmentService:
             await self.db.rollback()
             raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Question already answered") from exc
 
+        if completed:
+            from app.services.adaptive_engine import schedule_assessment_adaptation
+
+            results = self.serialize_results(assessment)
+            schedule_assessment_adaptation(
+                user_id,
+                assessment_id,
+                [
+                    {"skill_id": item.skill_id, "mastery_score": item.mastery_score}
+                    for item in results.skill_scores
+                ],
+            )
+
         next_question = None if completed else self._next_question(assessment)
         return AnswerFeedbackResponse(
             question_id=str(question.id),
@@ -210,12 +223,22 @@ class AssessmentService:
         assessment = await self.get_assessment(assessment_id, user_id)
         if assessment is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assessment not found")
-        if assessment.status != "completed":
+        newly_completed = assessment.status != "completed"
+        if newly_completed:
             if len(assessment.attempts) < assessment.total_questions:
                 raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Assessment is not complete")
             await self._finalize_loaded(assessment)
             await self.db.commit()
-        return self.serialize_results(assessment)
+        results = self.serialize_results(assessment)
+        if newly_completed:
+            from app.services.adaptive_engine import schedule_assessment_adaptation
+
+            schedule_assessment_adaptation(
+                user_id,
+                assessment_id,
+                [{"skill_id": item.skill_id, "mastery_score": item.mastery_score} for item in results.skill_scores],
+            )
+        return results
 
     async def _finalize_loaded(self, assessment: Assessment) -> None:
         now = datetime.now(timezone.utc)

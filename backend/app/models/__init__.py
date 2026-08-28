@@ -3,6 +3,7 @@
 from app.models.assessment import Assessment, AssessmentAttempt, AssessmentQuestion
 from app.models.adaptive import AdaptationEvent, KnowledgeGap
 from app.models.conversation import TutorConversation, TutorMessage
+from app.models.career import CareerRole, CareerSkillRequirement, UserCareerGoal
 from app.models.exercise import Exercise, ExerciseAttempt
 from app.models.gamification import Achievement, UserAchievement, XPEvent
 from app.models.goal import Goal, GoalSkill
@@ -19,6 +20,8 @@ __all__ = [
     "Assessment",
     "AssessmentAttempt",
     "AssessmentQuestion",
+    "CareerRole",
+    "CareerSkillRequirement",
     "DailyPlan",
     "DailyPlanItem",
     "Exercise",
@@ -39,6 +42,7 @@ __all__ = [
     "TutorConversation",
     "TutorMessage",
     "User",
+    "UserCareerGoal",
     "UserProject",
     "UserProjectStage",
     "UserAchievement",

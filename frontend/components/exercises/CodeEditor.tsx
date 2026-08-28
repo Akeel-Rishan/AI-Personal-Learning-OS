@@ -25,7 +25,8 @@ export function highlightPython(code: string): string {
   return output;
 }
 
-export function CodeEditor({ value, onChange, starterCode, disabled = false, minHeight = 320 }: { value: string; onChange: (value: string) => void; starterCode?: string | null; disabled?: boolean; minHeight?: number }): JSX.Element {
+export function CodeEditor({ value, onChange, starterCode, disabled = false, readOnly = false, minHeight = 320 }: { value: string; onChange: (value: string) => void; starterCode?: string | null; disabled?: boolean; readOnly?: boolean; minHeight?: number }): JSX.Element {
+  disabled = disabled || readOnly;
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const preRef = useRef<HTMLPreElement>(null);
   const [copied, setCopied] = useState(false);

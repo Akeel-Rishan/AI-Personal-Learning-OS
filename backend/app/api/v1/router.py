@@ -13,6 +13,7 @@ from app.api.v1.endpoints.exercises import router as exercises_router
 from app.api.v1.endpoints.gamification import router as gamification_router
 from app.api.v1.endpoints.plans import router as plans_router
 from app.api.v1.endpoints.progress import router as progress_router
+from app.api.v1.endpoints.projects import router as projects_router
 from app.api.v1.endpoints.roadmaps import router as roadmaps_router
 from app.api.v1.endpoints.skills import router as skills_router
 from app.api.v1.endpoints.tutor import router as tutor_router
@@ -35,6 +36,7 @@ router.include_router(exercises_router, prefix="/exercises", tags=["Exercises"])
 router.include_router(gamification_router, prefix="/gamification", tags=["Gamification"])
 router.include_router(plans_router, prefix="/plans", tags=["Daily Plans"])
 router.include_router(progress_router, prefix="/progress", tags=["Progress"])
+router.include_router(projects_router, prefix="/projects", tags=["Projects"])
 router.include_router(roadmaps_router, prefix="/roadmaps", tags=["Roadmaps"])
 router.include_router(skills_router, prefix="/skills", tags=["Skills"])
 router.include_router(tutor_router, prefix="/tutor", tags=["AI Tutor"])

@@ -16,6 +16,7 @@ from app.models.exercise import ExerciseAttempt
 from app.models.gamification import Achievement, UserAchievement, XPEvent
 from app.models.learning import DailyPlan, DailyPlanItem
 from app.models.progress import UserSkill
+from app.models.project import UserProject
 from app.models.roadmap import Roadmap, RoadmapItem, RoadmapPhase
 from app.models.user import User
 
@@ -121,7 +122,9 @@ class GamificationService:
         db, parsed = self._require_db(), self._parse_uuid(user_id)
         attempts = int(await db.scalar(select(func.count(ExerciseAttempt.id)).where(ExerciseAttempt.user_id == parsed, ExerciseAttempt.is_correct.is_not(None))) or 0)
         mastered = int(await db.scalar(select(func.count(UserSkill.id)).where(UserSkill.user_id == parsed, UserSkill.mastery_score >= .8)) or 0)
-        projects = int(await db.scalar(select(func.count(RoadmapItem.id)).join(RoadmapPhase).join(Roadmap).where(Roadmap.user_id == parsed, RoadmapItem.item_type == "project", RoadmapItem.status == "completed")) or 0)
+        roadmap_projects = int(await db.scalar(select(func.count(RoadmapItem.id)).join(RoadmapPhase).join(Roadmap).where(Roadmap.user_id == parsed, RoadmapItem.item_type == "project", RoadmapItem.status == "completed")) or 0)
+        built_projects = int(await db.scalar(select(func.count(UserProject.id)).where(UserProject.user_id == parsed, UserProject.status == "completed")) or 0)
+        projects = roadmap_projects + built_projects
         best_assessment = float(await db.scalar(select(func.coalesce(func.max(Assessment.score_percentage), 0)).where(Assessment.user_id == parsed, Assessment.status == "completed")) or 0)
         streak = float((await self.get_streak_info(user_id))["current_streak"])
         return {"attempts": attempts, "mastered": mastered, "projects": projects, "best_assessment": best_assessment, "streak": streak}

@@ -8,6 +8,7 @@ from app.models.gamification import Achievement, UserAchievement, XPEvent
 from app.models.goal import Goal, GoalSkill
 from app.models.learning import DailyPlan, DailyPlanItem, LearningSession
 from app.models.progress import SkillHistory, UserSkill
+from app.models.project import Project, ProjectStage, ProjectSubmission, UserProject, UserProjectStage
 from app.models.roadmap import Roadmap, RoadmapItem, RoadmapPhase
 from app.models.skill import Skill, SkillPrerequisite
 from app.models.user import User, UserProfile
@@ -26,6 +27,9 @@ __all__ = [
     "GoalSkill",
     "LearningSession",
     "KnowledgeGap",
+    "Project",
+    "ProjectStage",
+    "ProjectSubmission",
     "Roadmap",
     "RoadmapItem",
     "RoadmapPhase",
@@ -35,6 +39,8 @@ __all__ = [
     "TutorConversation",
     "TutorMessage",
     "User",
+    "UserProject",
+    "UserProjectStage",
     "UserAchievement",
     "UserProfile",
     "UserSkill",

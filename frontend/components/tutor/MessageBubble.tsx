@@ -61,7 +61,7 @@ function CodeBlock({ language, content }: { language: string; content: string })
   return <div className="my-4 overflow-hidden rounded-xl border border-slate-700 bg-[#1e1e1e]"><div className="flex items-center justify-between border-b border-slate-700 px-4 py-2 text-xs text-slate-400"><span>{language || "code"}</span><button type="button" onClick={() => void copy()} className="font-semibold text-sky-300">{copied ? "Copied!" : "Copy"}</button></div><pre className="overflow-x-auto p-4 text-sm leading-6"><code>{content.split("\n").map((line, index) => <span key={index} className="table-row"><span aria-hidden="true" className="table-cell select-none pr-4 text-right text-slate-600">{index + 1}</span><span className="table-cell whitespace-pre">{highlightedLine(line)}</span></span>)}</code></pre></div>;
 }
 
-function MarkdownContent({ content }: { content: string }): JSX.Element {
+export function MarkdownContent({ content }: { content: string }): JSX.Element {
   return <div className="space-y-3 leading-7">{parseMarkdown(content).map((block, index) => {
     if (block.type === "code") return <CodeBlock key={index} language={block.language} content={block.content} />;
     if (block.type === "heading") { const className = block.level === 1 ? "text-xl" : block.level === 2 ? "text-lg" : "text-base"; return <h3 key={index} className={`${className} font-bold text-white`}>{inlineMarkdown(block.content)}</h3>; }

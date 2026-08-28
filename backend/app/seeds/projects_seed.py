@@ -1,0 +1,48 @@
+"""Idempotently seed five complete project templates and their stages."""
+from sqlalchemy import create_engine, select
+from sqlalchemy.orm import Session
+from app.core.config import settings
+from app.models.project import Project, ProjectStage
+
+DOCS={"programming":{"title":"Python documentation","url":"https://docs.python.org/3/"},"data-science":{"title":"Pandas documentation","url":"https://pandas.pydata.org/docs/"},"ml":{"title":"Scikit-learn documentation","url":"https://scikit-learn.org/stable/"}}
+
+def make_stage(title:str,kind:str,minutes:int,deliverables:list[str],category:str)->dict[str,object]:
+    return {"title":title,"description":f"Build and verify the {title.lower()} portion of the project.","stage_type":kind,"estimated_minutes":minutes,"instructions":f"## {title}\n\nWork through this stage incrementally. Implement one deliverable at a time, verify it, and record key decisions in your notes. Keep the code readable and test important edge cases before submitting.","deliverables":deliverables,"hints":[f"Start by turning the first deliverable into a small, testable task.","Inspect intermediate values before adding more complexity.","Compare your finished work against every validation criterion and test an edge case."],"resources":[DOCS.get(category,DOCS["programming"])],"validation_criteria":[f"Delivers: {item}" for item in deliverables]}
+
+def project(title:str,slug:str,difficulty:int,hours:float,category:str,skills:list[str],stack:list[str],summary:str,stages:list[tuple[str,str,int,list[str]]],featured:bool=False,prereqs:list[dict[str,object]]|None=None)->dict[str,object]:
+    return {"title":title,"slug":slug,"description":f"{summary}. Follow a production-inspired, staged workflow with mentor guidance, evaluation, testing, and reflection.","short_description":summary,"difficulty_level":difficulty,"estimated_hours":hours,"category":category,"required_skills":[{"skill_slug":item,"importance":"required"} for item in skills],"prerequisite_skills":prereqs or [],"tech_stack":stack,"learning_outcomes":[f"Build a complete {title}","Apply an iterative engineering workflow","Explain technical decisions and trade-offs"],"is_featured":featured,"stages":[make_stage(*item,category) for item in stages]}
+
+PROJECTS=[
+project("Expense Tracker CLI","expense-tracker-cli",1,6,"programming",["python-fundamentals","python-data-structures"],["Python","JSON","CSV"],"Build a command-line expense tracking app from scratch",[
+("Setup & Planning","setup",20,["Create the project structure","Define expense fields: category, amount, date, and description","Plan add, view, delete, summarize, and export features"]),
+("Data Storage","implementation",30,["Implement JSON file storage","Create save_expenses() and load_expenses()","Handle a missing file gracefully"]),
+("Core Features","implementation",45,["Implement add_expense()","Implement filtered view_expenses()","Implement delete_expense()"]),
+("Analytics","implementation",40,["Return monthly totals by category","Calculate biggest and average expense","Format a readable table"]),
+("CLI Interface","implementation",35,["Add argparse commands","Validate user input","Support add, view, delete, summary, and export"]),
+("Testing & Reflection","reflection",30,["Manually test every command","Write three edge-case tests","Explain what you would improve"]),],True),
+project("Data Analysis Dashboard","data-analysis-dashboard",2,10,"data-science",["pandas","data-visualization","exploratory-data-analysis"],["Python","Pandas","Matplotlib","Seaborn"],"Analyze a real-world dataset and create a visual dashboard",[
+("Dataset Selection & Loading","setup",25,["Load a dataset with Pandas","Inspect shape, dtypes, and sample rows","Document every column"]),("Data Cleaning","implementation",45,["Handle missing values deliberately","Correct data types","Remove duplicates and document decisions"]),("Exploratory Analysis","implementation",50,["Calculate summary statistics","Find top and bottom performers","Answer five business questions"]),("Visualization: Overview","implementation",40,["Chart sales over time","Chart category and regional results","Label and save every chart"]),("Visualization: Deep Dive","implementation",40,["Create a correlation heatmap","Plot key distributions","Build a 2x2 dashboard"]),("Insights & Recommendations","planning",30,["Write five evidence-based insights","Make three recommendations","Create a 300-word executive summary"]),("Final Polish & Submission","review",25,["Add comments and docstrings","Verify saved chart labels","Write a project reflection"]),],True,[{"skill_slug":"pandas","min_mastery":.35}]),
+project("ML Price Predictor","ml-price-predictor",3,15,"ml",["ml-fundamentals","supervised-learning","pandas","statistics-fundamentals"],["Python","Pandas","Scikit-learn","Matplotlib"],"Build and evaluate a machine-learning model to predict house prices",[
+("Problem Definition","planning",20,["Define the target and features","Set an acceptable R² target","Describe assumptions"]),("Data Exploration","implementation",40,["Inspect the dataset","Analyze target distribution","Identify predictive correlations"]),("Feature Engineering","implementation",50,["Encode categorical variables","Handle missing values","Create features and scale without leakage"]),("Model Training: Baseline","implementation",40,["Create an 80/20 split","Train LinearRegression","Report RMSE, MAE, R² and predicted-vs-actual plot"]),("Model Improvement","implementation",50,["Train RandomForestRegressor","Tune depth and estimator count","Compare models and plot feature importance"]),("Model Evaluation","implementation",40,["Cross-validate the best model","Analyze residuals","Write a model card"]),("Prediction Interface","implementation",30,["Build predict_price(features)","Save and reload with joblib","Run sample predictions"]),("Reflection & Next Steps","reflection",30,["Explain the biggest improvement","Propose future experiments","Discuss ethical considerations"]),],True,[{"skill_slug":"ml-fundamentals","min_mastery":.4},{"skill_slug":"pandas","min_mastery":.4}]),
+project("AI Text Classifier","ai-text-classifier",3,12,"ml",["nlp-fundamentals","ml-fundamentals","python-fundamentals"],["Python","Scikit-learn","NLTK","Pandas"],"Build a sentiment classifier for positive, negative, and neutral text",[
+("Data Collection & Setup","setup",30,["Load labeled text data","Inspect class balance","Create train and test splits"]),("Text Preprocessing","implementation",50,["Normalize text","Tokenize and remove noise","Avoid leakage between splits"]),("Feature Extraction: TF-IDF","implementation",40,["Fit TF-IDF on training data","Transform train and test data","Inspect important terms"]),("Model Training & Evaluation","implementation",45,["Train a classifier","Report precision, recall, and F1","Create a confusion matrix"]),("Error Analysis","implementation",35,["Inspect misclassified examples","Group recurring failure patterns","Document three findings"]),("Model Improvement","implementation",40,["Tune model parameters","Test preprocessing changes","Compare against baseline"]),("Deployment Function & Reflection","reflection",30,["Build classify_text()","Handle invalid input","Document limitations and learning"]),],False,[{"skill_slug":"nlp-fundamentals","min_mastery":.35}]),
+project("FastAPI ML Service","fastapi-ml-service",4,18,"ml",["fastapi","ml-fundamentals","docker"],["Python","FastAPI","Scikit-learn","Docker","Uvicorn"],"Deploy an ML model as a production-ready REST API with Docker",[
+("API Design","planning",30,["Define prediction endpoints","Design request and response contracts","List failure cases"]),("FastAPI Setup","setup",30,["Create the application structure","Add health and prediction routes","Configure Uvicorn"]),("Model Integration","implementation",45,["Load the model once at startup","Map request features correctly","Return predictions consistently"]),("Request/Response Validation","implementation",40,["Create Pydantic schemas","Validate ranges and required fields","Document examples"]),("Error Handling & Logging","implementation",35,["Return safe HTTP errors","Add structured logging","Handle model failures"]),("Testing","testing",40,["Test health and prediction routes","Test validation failures","Add at least one model edge case"]),("Dockerization","deployment",45,["Create a Dockerfile","Run as a non-root service where practical","Verify the container health endpoint"]),("Documentation & Reflection","review",30,["Document local and Docker usage","Describe the API contract","Reflect on production improvements"]),],False,[{"skill_slug":"fastapi","min_mastery":.45},{"skill_slug":"docker","min_mastery":.35}]),
+]
+
+def seed_projects()->None:
+    engine=create_engine(settings.database_url.replace("+asyncpg","+psycopg2"),pool_pre_ping=True); created=stages_created=0
+    with Session(engine) as session:
+        existing={item.slug:item for item in session.scalars(select(Project)).all()}
+        for order,source in enumerate(PROJECTS):
+            data=dict(source); stage_data=list(data.pop("stages")); item=existing.get(str(data["slug"]))
+            if item is None: item=Project(**data,order_index=order); session.add(item); session.flush(); created+=1
+            else:
+                for key,value in data.items(): setattr(item,key,value)
+                item.order_index=order
+            if not item.stages:
+                for index,values in enumerate(stage_data): session.add(ProjectStage(project_id=item.id,order_index=index,**values)); stages_created+=1
+        session.commit()
+    engine.dispose(); print(f"Seeded {created} projects and {stages_created} project stages")
+
+if __name__=="__main__": seed_projects()

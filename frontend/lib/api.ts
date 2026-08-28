@@ -4,7 +4,7 @@ import { clearStoredAuth, getAccessToken } from "@/lib/auth";
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface ErrorPayload {
-  detail?: string | Array<{ msg?: string }>;
+  detail?: string | { message?: string } | Array<{ msg?: string }>;
   message?: string;
 }
 
@@ -19,6 +19,7 @@ function messageFromPayload(payload: unknown, fallback: string): string {
   if (typeof payload !== "object" || payload === null) return fallback;
   const errorPayload = payload as ErrorPayload;
   if (typeof errorPayload.detail === "string") return errorPayload.detail;
+  if (typeof errorPayload.detail === "object" && errorPayload.detail !== null && !Array.isArray(errorPayload.detail) && typeof errorPayload.detail.message === "string") return errorPayload.detail.message;
   if (Array.isArray(errorPayload.detail)) {
     const firstMessage = errorPayload.detail[0]?.msg;
     if (firstMessage) return firstMessage;
